@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}Performance Analytics{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-gray-900 mb-8">Performance Analytics</h1>
+    
+    <div class="grid md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-sm text-gray-600 mb-1">Total Interviews</p>
+            <p class="text-3xl font-bold text-gray-900" id="stat-total">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-sm text-gray-600 mb-1">Avg. Overall</p>
+            <p class="text-3xl font-bold text-gray-900" id="stat-avg">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-sm text-gray-600 mb-1">Avg. Technical</p>
+            <p class="text-3xl font-bold text-blue-700" id="stat-tech">-</p>
+        </div>
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <p class="text-sm text-gray-600 mb-1">Avg. Communication</p>
+            <p class="text-3xl font-bold text-green-700" id="stat-comm">-</p>
+        </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Score Trend</h2>
+            <div id="chart-container" class="h-64 flex items-center justify-center text-gray-400">
+                Loading chart...
+            </div>
+        </div>
+        
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance by Role</h2>
+            <div id="role-stats" class="space-y-4">
+                <p class="text-gray-400 text-center py-8">Loading...</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Recommendations</h2>
+        <div id="recommendations" class="space-y-3">
+            <p class="text-gray-400">Complete more interviews to get personalized recommendations.</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+async function loadAnalytics() {
+    try {
+        const response = await fetch('/analytics/api/summary/');
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('stat-total').textContent = data.total_interviews || 0;
+            document.getElementById('stat-avg').textContent = (data.avg_overall_score || 0) + '%';
+            document.getElementById('stat-tech').textContent = (data.avg_technical_score || 0) + '%';
+            document.getElementById('stat-comm').textContent = (data.avg_communication_score || 0) + '%';
+        }
+    } catch (e) {
+        console.log('Summary unavailable');
+    }
+    
+    try {
+        const response = await fetch('/analytics/api/performance/');
+        if (response.ok) {
+            const data = await response.json();
+            renderChart(data.score_history || []);
+        }
+    } catch (e) {
+        console.log('Performance data unavailable');
+    }
+    
+    try {
+        const response = await fetch('/analytics/api/role-analysis/');
+        if (response.ok) {
+            const data = await response.json();
+            renderRoleStats(data.roles || []);
+        }
+    } catch (e) {
+        console.log('Role analysis unavailable');
+    }
+}
+
+function renderChart(history) {
+    const container = document.getElementById('chart-container');
+    
+    if (history.length === 0) {
+        container.innerHTML = '<p class="text-gray-400">No data available yet</p>';
+        return;
+    }
+    
+    const labels = history.map(h => new Date(h.date).toLocaleDateString());
+    const scores = history.map(h => h.score);
+    
+    const canvas = document.createElement('canvas');
+    container.innerHTML = '';
+    container.appendChild(canvas);
+    
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Overall Score',
+                data: scores,
+                borderColor: '#2563EB',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { beginAtZero: true, max: 100 }
+            }
+        }
+    });
+}
+
+function renderRoleStats(roles) {
+    const container = document.getElementById('role-stats');
+    
+    if (roles.length === 0) {
+        container.innerHTML = '<p class="text-gray-400 text-center py-8">No data available</p>';
+        return;
+    }
+    
+    container.innerHTML = roles.map(role => `
+        <div>
+            <div class="flex justify-between text-sm mb-1">
+                <span class="font-medium">${role.role}</span>
+                <span>${role.count} interviews - ${Math.round(role.avg_score || 0)}% avg</span>
+            </div>
+            <div class="bg-gray-200 rounded-full h-2">
+                <div class="bg-primary h-2 rounded-full" style="width: ${role.avg_score || 0}%"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+loadAnalytics();
+</script>
+{% endblock %}

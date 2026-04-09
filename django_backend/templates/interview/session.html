@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+{% block title %}Interview Session{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <div class="flex items-center justify-between mb-6">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ interview.role }}</h1>
+                <p class="text-gray-500">{{ interview.interview_type|title }} Interview</p>
+            </div>
+            <div class="text-right">
+                <div class="text-sm text-gray-500">Progress</div>
+                <div class="text-3xl font-bold text-primary">{{ progress }}%</div>
+                <div class="text-sm text-gray-500">{{ answered }} of {{ total }} answered</div>
+            </div>
+        </div>
+        
+        <div class="bg-gray-200 rounded-full h-3 mb-8 shadow-inner">
+            <div class="bg-gradient-to-r from-primary to-blue-600 h-3 rounded-full transition-all duration-500 shadow-sm" style="width: {{ progress }}%"></div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary font-bold">
+                        {{ answered|add:1 }}
+                    </span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-full bg-blue-100 text-blue-700">
+                        {{ question.question_type|title }}
+                    </span>
+                    <span class="px-3 py-1.5 text-sm font-medium rounded-full 
+                        {% if question.difficulty == 'easy' %}bg-green-100 text-green-700
+                        {% elif question.difficulty == 'medium' %}bg-yellow-100 text-yellow-700
+                        {% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ question.difficulty|title }}
+                    </span>
+                </div>
+                <div class="text-sm text-gray-400">
+                    Question {{ answered|add:1 }} of {{ total }}
+                </div>
+            </div>
+            
+            <h2 class="text-xl font-semibold text-gray-900 mb-8 leading-relaxed">
+                {{ question.question_text }}
+            </h2>
+            
+            <form id="answerForm" method="POST" action="{% url 'submit_answer' interview.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="question_id" value="{{ question.id }}">
+                <input type="hidden" name="is_voice" id="isVoiceInput" value="false">
+                
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Your Answer</label>
+                    <textarea name="answer_text" id="answerText" rows="8" required
+                        class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary focus:border-primary outline-none transition resize-none text-gray-700 leading-relaxed placeholder-gray-400"
+                        placeholder="Type your answer here or use voice input..."></textarea>
+                    <p class="mt-2 text-sm text-gray-400">Tip: Structure your answer with examples and specific details</p>
+                </div>
+                
+                <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="voiceBtn" class="flex items-center px-5 py-2.5 text-gray-600 hover:text-primary hover:bg-primary/5 rounded-lg transition border border-gray-200">
+                            <svg id="micIcon" class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                            <span id="voiceBtnText">Use Voice Input</span>
+                        </button>
+                        <div id="recordingStatus" class="hidden text-sm text-red-500 flex items-center">
+                            <span class="w-2 h-2 bg-red-500 rounded-full mr-2 animate-pulse"></span>
+                            <span id="recordingText">Listening...</span>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="px-8 py-3 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all flex items-center">
+                        <span>Submit Answer</span>
+                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="feedbackContainer" class="hidden bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-6">
+            <div class="flex items-center mb-6">
+                <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900">Evaluation Results</h3>
+                    <p class="text-gray-500">AI-powered feedback on your answer</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 text-center">
+                    <p class="text-sm text-blue-600 mb-2 font-medium">Technical Score</p>
+                    <p class="text-4xl font-bold text-blue-700" id="techScore">-</p>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 text-center">
+                    <p class="text-sm text-green-600 mb-2 font-medium">Communication Score</p>
+                    <p class="text-4xl font-bold text-green-700" id="commScore">-</p>
+                </div>
+            </div>
+            
+            <div class="mb-6 p-5 bg-gray-50 rounded-xl">
+                <p class="text-sm font-semibold text-gray-700 mb-2">Feedback</p>
+                <p class="text-gray-600 leading-relaxed" id="feedbackText">-</p>
+            </div>
+            
+            <div id="missingPointsContainer" class="p-5 bg-amber-50 rounded-xl">
+                <p class="text-sm font-semibold text-amber-800 mb-3">Points to Consider</p>
+                <ul class="list-disc list-inside text-amber-700 space-y-1" id="missingPointsList"></ul>
+            </div>
+            
+            <div class="mt-6">
+                <a href="{% url 'interview_session' interview.id %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary to-blue-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all">
+                    Continue to Next Question
+                    <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                    </svg>
+                </a>
+            </div>
+        </div>
+        
+        {% if not next_question %}
+        <div class="text-center">
+            <form method="POST" action="{% url 'complete_interview' interview.id %}">
+                {% csrf_token %}
+                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-green-500/30 transition-all">
+                    Complete Interview
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const answerForm = document.getElementById('answerForm');
+const answerText = document.getElementById('answerText');
+const voiceBtn = document.getElementById('voiceBtn');
+const micIcon = document.getElementById('micIcon');
+const voiceBtnText = document.getElementById('voiceBtnText');
+const recordingStatus = document.getElementById('recordingStatus');
+const recordingText = document.getElementById('recordingText');
+const isVoiceInputField = document.getElementById('isVoiceInput');
+const submitBtn = document.getElementById('submitBtn');
+
+let recognition = null;
+let isRecording = false;
+
+function initSpeechRecognition() {
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+    } else if ('SpeechRecognition' in window) {
+        recognition = new SpeechRecognition();
+    } else {
+        console.log('Speech recognition not supported');
+        return null;
+    }
+    
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+    
+    recognition.onstart = () => {
+        isRecording = true;
+        voiceBtnText.textContent = 'Listening...';
+        recordingStatus.classList.remove('hidden');
+        recordingText.textContent = 'Listening...';
+        micIcon.classList.add('animate-pulse');
+        voiceBtn.classList.add('text-red-500', 'border-red-300');
+    };
+    
+    recognition.onresult = (event) => {
+        let finalTranscript = '';
+        let interimTranscript = '';
+        
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        
+        if (finalTranscript) {
+            answerText.value += (answerText.value ? ' ' : '') + finalTranscript;
+        }
+    };
+    
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        if (event.error === 'no-speech') {
+            recordingText.textContent = 'No speech detected';
+        } else if (event.error === 'audio-capture') {
+            recordingText.textContent = 'No microphone found';
+        }
+        stopRecording();
+    };
+    
+    recognition.onend = () => {
+        if (isRecording) {
+            recognition.start();
+        }
+    };
+    
+    return recognition;
+}
+
+function startRecording() {
+    if (!recognition) {
+        recognition = initSpeechRecognition();
+    }
+    
+    if (recognition) {
+        try {
+            recognition.start();
+        } catch (e) {
+            console.error('Recognition start error:', e);
+        }
+    } else {
+        alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
+    }
+}
+
+function stopRecording() {
+    isRecording = false;
+    if (recognition) {
+        recognition.stop();
+    }
+    voiceBtnText.textContent = 'Use Voice Input';
+    recordingStatus.classList.add('hidden');
+    micIcon.classList.remove('animate-pulse');
+    voiceBtn.classList.remove('text-red-500', 'border-red-300');
+}
+
+voiceBtn.addEventListener('click', () => {
+    if (!isRecording) {
+        startRecording();
+    } else {
+        stopRecording();
+    }
+});
+
+answerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const answer = answerText.value.trim();
+    if (!answer) {
+        alert('Please enter your answer or use voice input.');
+        return;
+    }
+    
+    if (isRecording) {
+        stopRecording();
+    }
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span>Evaluating...</span><svg class="w-5 h-5 ml-2 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+    
+    const formData = new FormData(answerForm);
+    
+    try {
+        const response = await fetch(answerForm.action, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('techScore').textContent = data.technical_score.toFixed(1) + '%';
+            document.getElementById('commScore').textContent = data.communication_score.toFixed(1) + '%';
+            document.getElementById('feedbackText').textContent = data.feedback || 'No feedback available.';
+            
+            const missingList = document.getElementById('missingPointsList');
+            missingList.innerHTML = '';
+            if (data.missing_points && data.missing_points.length > 0) {
+                data.missing_points.forEach(point => {
+                    const li = document.createElement('li');
+                    li.textContent = point;
+                    missingList.appendChild(li);
+                });
+            } else {
+                document.getElementById('missingPointsContainer').style.display = 'none';
+            }
+            
+            document.getElementById('feedbackContainer').classList.remove('hidden');
+            submitBtn.innerHTML = '<span>Submitted!</span><svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+            submitBtn.classList.remove('from-primary', 'to-blue-600');
+            submitBtn.classList.add('from-green-500', 'to-green-600');
+        } else {
+            alert(data.error || 'Failed to submit answer');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<span>Submit Answer</span><svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to submit answer. Please try again.');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Submit Answer</span><svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>';
+    }
+});
+</script>
+{% endblock %}

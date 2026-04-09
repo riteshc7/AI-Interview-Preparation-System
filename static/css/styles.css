@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.smooth-transition {
+    transition: all 0.3s ease-in-out;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.score-circle {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.score-circle svg {
+    transform: rotate(-90deg);
+}
+
+.score-circle .percentage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.gradient-bg {
+    background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+}
+
+.btn-primary {
+    @apply px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition;
+}
+
+.btn-secondary {
+    @apply px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition;
+}
+
+.input-field {
+    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none transition;
+}
+
+.card {
+    @apply bg-white p-6 rounded-lg shadow-sm border border-gray-200;
+}
+
+.progress-bar {
+    @apply bg-gray-200 rounded-full h-2 overflow-hidden;
+}
+
+.progress-bar-fill {
+    @apply bg-primary h-2 transition-all duration-300;
+}
+
+.badge {
+    @apply px-3 py-1 text-sm font-medium rounded-full;
+}
+
+.badge-success {
+    @apply bg-green-100 text-green-700;
+}
+
+.badge-warning {
+    @apply bg-yellow-100 text-yellow-700;
+}
+
+.badge-danger {
+    @apply bg-red-100 text-red-700;
+}
+
+.badge-info {
+    @apply bg-blue-100 text-blue-700;
+}
+
+@keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.animate-pulse-subtle {
+    animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}

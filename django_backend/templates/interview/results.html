@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% load custom_filters %}
+{% block title %}Interview Results{% endblock %}
+{% block content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Interview Complete!</h1>
+        <p class="text-gray-600 mt-1">{{ interview.role }} - {{ interview.completed_at|date:"F d, Y" }}</p>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+            <p class="text-sm text-gray-500 mb-4">Overall Score</p>
+            <div class="relative inline-flex items-center justify-center w-32 h-32">
+                <svg class="w-32 h-32 transform -rotate-90" viewBox="0 0 128 128">
+                    <circle cx="64" cy="64" r="58" stroke="#E5E7EB" stroke-width="10" fill="none"/>
+                    <circle id="scoreCircle" cx="64" cy="64" r="58" stroke-width="10" fill="none"
+                        stroke-linecap="round"
+                        stroke-dasharray="0 364.4"
+                        style="transition: stroke-dasharray 1s ease-out;"
+                    />
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                    <span id="scoreValue" class="text-3xl font-bold text-gray-900">0%</span>
+                    <span id="scoreLabel" class="text-xs text-gray-400 mt-1">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl border border-blue-200 text-center">
+            <p class="text-sm text-blue-600 mb-2 font-medium">Technical Score</p>
+            <div class="text-5xl font-bold text-blue-700 mb-2">{{ interview.technical_score|default:"0"|floatformat:0 }}%</div>
+            <div class="w-full bg-blue-200 rounded-full h-2 mt-3">
+                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ interview.technical_score|default:0 }}%"></div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl border border-green-200 text-center">
+            <p class="text-sm text-green-600 mb-2 font-medium">Communication Score</p>
+            <div class="text-5xl font-bold text-green-700 mb-2">{{ interview.communication_score|default:"0"|floatformat:0 }}%</div>
+            <div class="w-full bg-green-200 rounded-full h-2 mt-3">
+                <div class="bg-green-600 h-2 rounded-full" style="width: {{ interview.communication_score|default:0 }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="grid md:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Interview Details</h2>
+            <dl class="space-y-3">
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-500">Duration</dt>
+                    <dd class="font-medium">{% if interview.duration_minutes %}{{ interview.duration_minutes }} min{% else %}<span class="text-gray-400">-</span>{% endif %}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-500">Questions</dt>
+                    <dd class="font-medium">{{ questions.count }}</dd>
+                </div>
+                <div class="flex justify-between py-2 border-b border-gray-100">
+                    <dt class="text-gray-500">Type</dt>
+                    <dd class="font-medium">{{ interview.interview_type|title }}</dd>
+                </div>
+                <div class="flex justify-between py-2">
+                    <dt class="text-gray-500">Completed</dt>
+                    <dd class="font-medium">{% if interview.completed_at %}{{ interview.completed_at|date:"M d, Y" }} at {{ interview.completed_at|time:"H:i" }}{% else %}<span class="text-gray-400">-</span>{% endif %}</dd>
+                </div>
+            </dl>
+        </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h2>
+            <div class="space-y-5">
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">Technical Knowledge</span>
+                        <span class="font-bold text-blue-600">{{ interview.technical_score|default:0|floatformat:0 }}%</span>
+                    </div>
+                    <div class="bg-gray-100 rounded-full h-3">
+                        <div class="bg-blue-500 h-3 rounded-full" style="width: {{ interview.technical_score|default:0 }}%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between text-sm mb-2">
+                        <span class="text-gray-600">Communication</span>
+                        <span class="font-bold text-green-600">{{ interview.communication_score|default:0|floatformat:0 }}%</span>
+                    </div>
+                    <div class="bg-gray-100 rounded-full h-3">
+                        <div class="bg-green-500 h-3 rounded-full" style="width: {{ interview.communication_score|default:0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-xl font-semibold text-gray-900">Question Review</h2>
+        </div>
+        <div class="divide-y divide-gray-100">
+            {% for question in questions %}
+            <div class="p-6">
+                {% with answer=answer_map|get_item:question.id %}
+                <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-4">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary text-white font-bold text-sm">
+                                {{ forloop.counter }}
+                            </span>
+                            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                {{ question.difficulty|title }}
+                            </span>
+                            <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                {{ question.question_type|title }}
+                            </span>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900">{{ question.question_text }}</h3>
+                    </div>
+                    {% if answer %}
+                    <div class="flex gap-3">
+                        <div class="text-center px-4 py-2 bg-blue-50 rounded-lg">
+                            <p class="text-xs text-blue-500 mb-1">Technical</p>
+                            <p class="text-xl font-bold {% if answer.technical_score|default:0 >= 70 %}text-green-600{% elif answer.technical_score|default:0 >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ answer.technical_score|default:"0"|floatformat:0 }}%
+                            </p>
+                        </div>
+                        <div class="text-center px-4 py-2 bg-green-50 rounded-lg">
+                            <p class="text-xs text-green-500 mb-1">Communication</p>
+                            <p class="text-xl font-bold {% if answer.communication_score|default:0 >= 70 %}text-green-600{% elif answer.communication_score|default:0 >= 50 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                {{ answer.communication_score|default:"0"|floatformat:0 }}%
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if answer %}
+                <div class="bg-gray-50 rounded-xl p-5">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Your Answer:</p>
+                    <p class="text-gray-700 whitespace-pre-wrap break-words">{{ answer.answer_text|escape|default:"" }}</p>
+                </div>
+                
+                {% if answer.feedback %}
+                <div class="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                    <p class="text-sm font-semibold text-blue-800 mb-1">Feedback</p>
+                    <p class="text-blue-700">{{ answer.feedback }}</p>
+                </div>
+                {% endif %}
+                
+                {% if answer.missing_points %}
+                <div class="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                    <p class="text-sm font-semibold text-amber-800 mb-2">Points to Consider</p>
+                    <ul class="list-disc list-inside text-amber-700 space-y-1">
+                        {% for point in answer.missing_points %}
+                        <li>{{ point }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% else %}
+                <p class="text-gray-400 italic">Not answered</p>
+                {% endif %}
+                {% endwith %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+        <a href="{% url 'interview_list' %}" class="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition">
+            View All Interviews
+        </a>
+        <a href="{% url 'start_interview' %}" class="px-6 py-3 bg-primary text-white font-semibold rounded-lg hover:bg-primary-dark transition">
+            Start New Interview
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const score = {{ interview.overall_score|default:0 }};
+    const circumference = 2 * Math.PI * 58;
+    const offset = circumference - (score / 100) * circumference;
+    
+    const circle = document.getElementById('scoreCircle');
+    const scoreValue = document.getElementById('scoreValue');
+    const scoreLabel = document.getElementById('scoreLabel');
+    
+    circle.style.strokeDasharray = circumference;
+    circle.style.strokeDashoffset = circumference;
+    
+    let currentOffset = circumference;
+    const animate = () => {
+        if (currentOffset > offset) {
+            currentOffset -= 2;
+            circle.style.strokeDashoffset = currentOffset;
+            requestAnimationFrame(animate);
+        }
+    };
+    
+    setTimeout(() => {
+        if (score >= 70) {
+            circle.style.stroke = '#10B981';
+        } else if (score >= 50) {
+            circle.style.stroke = '#F59E0B';
+        } else {
+            circle.style.stroke = '#EF4444';
+        }
+        animate();
+        
+        let currentScore = 0;
+        const scoreInterval = setInterval(() => {
+            currentScore += 1;
+            if (currentScore >= score) {
+                currentScore = score;
+                clearInterval(scoreInterval);
+            }
+            scoreValue.textContent = Math.round(currentScore) + '%';
+        }, 20);
+        
+        if (score >= 80) {
+            scoreLabel.textContent = 'Excellent';
+        } else if (score >= 70) {
+            scoreLabel.textContent = 'Good';
+        } else if (score >= 50) {
+            scoreLabel.textContent = 'Average';
+        } else {
+            scoreLabel.textContent = 'Needs Work';
+        }
+    }, 300);
+});
+</script>
+{% endblock %}

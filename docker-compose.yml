@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  django:
+    build:
+      context: ./django_backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=django-insecure-dev-key
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ai_interview_db
+      - FASTAPI_URL=http://fastapi:8001
+    depends_on:
+      - db
+      - fastapi
+    volumes:
+      - ./django_backend:/app
+      - ./static:/app/static
+
+  fastapi:
+    build:
+      context: ./fastapi_service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - HF_MODEL_NAME=facebook/bart-large-cnn
+    volumes:
+      - ./fastapi_service:/app
+      - ./models:/app/models
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=ai_interview_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
