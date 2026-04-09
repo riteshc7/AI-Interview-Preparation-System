@@ -34,11 +34,6 @@ pip install -r requirements.txt
 python -m uvicorn main:app --reload --port 8001
 ```
 
-### 3. Access the Application
-
-- Django: http://localhost:8000
-- FastAPI docs: http://localhost:8001/docs
-
 ## Features
 
 - User authentication (signup, login, logout)
